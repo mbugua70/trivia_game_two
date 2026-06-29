@@ -1,6 +1,7 @@
+const API_URL = "https://safaricomtrivia.igurukenya.app/"
 export async function loginUser(creds) {
   console.log(creds);
-  const res = await fetch("http://localhost:4040/api/players/signup", {
+  const res = await fetch(`${API_URL}api/players/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +27,7 @@ export async function getQuestions() {
   if (!user) {
     return;
   }
-  const res = await fetch("http://localhost:4040/api/questions", {
+  const res = await fetch(`${API_URL}api/questions`, {
     headers: {
       Authorization: `Bearer ${user.token}`,
     },
@@ -52,7 +53,7 @@ export async function getColors() {
   if (!user) {
     return;
   }
-  const res = await fetch("http://localhost:4040/api/colors", {
+  const res = await fetch(`${API_URL}api/colors`, {
     headers: {
       Authorization: `Bearer ${user.token}`,
     },
@@ -81,7 +82,7 @@ export async function updatePlayer(updateData) {
   const id = user.userId;
   console.log(id);
   try {
-    const res = await fetch(`http://localhost:4040/api/players/signup/${id}`, {
+    const res = await fetch(`${API_URL}api/players/signup/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
