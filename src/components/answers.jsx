@@ -1,125 +1,49 @@
 /* eslint-disable react/prop-types */
 import { useRef } from "react";
-import { Howl } from "howler";
-import wrongPic from "../assets/image/wrong.png";
-import correctPic from "../assets/image/correct.png";
-import correctSoundFile from "../assets/audio/correct.wav";
-import wrongSoundFile from "../assets/audio/wrong.wav";
 
-const Answers = ({ onSelect, answer, selectedAnswer, answerState, COLORS }) => {
-  // audio object creation
-  const correctSound = new Howl({ src: correctSoundFile });
-  const wrongSound = new Howl({ src: wrongSoundFile });
-  const shuffleQuestions = useRef();
-  if (!shuffleQuestions.current) {
-    shuffleQuestions.current = [...answer];
-    shuffleQuestions.current.sort(() => Math.random() - 0.5);
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+// phase: "" while answering, then "correct" | "wrong" | "timeout". Once
+// answered, the right option is always shown - so a wrong guess or a
+// timeout still teaches the player the answer.
+const Answers = ({ answers, correctAnswer, selectedAnswer, phase, onSelect }) => {
+  // Shuffled once per question, so the right answer isn't always first.
+  const shuffled = useRef();
+  if (!shuffled.current) {
+    shuffled.current = [...answers].sort(() => Math.random() - 0.5);
   }
+  const options = shuffled.current;
+  const answered = phase !== "";
 
   return (
-    <ul id="answers">
-      {shuffleQuestions.current.map((answer, index) => {
-        const isAnswered = selectedAnswer === answer;
-        let cssClass = "";
-        let isCorrect;
-        let isClicked = false;
-
-        if (answerState === "answered" && isAnswered) {
-          cssClass = "selected";
-          isClicked = false;
+    <ul className={`answers ${options.length === 2 ? "answers--pair" : ""}`}>
+      {options.map((answer, index) => {
+        const isPicked = selectedAnswer === answer;
+        const isRight = answer === correctAnswer;
+        let state = "";
+        if (answered) {
+          if (isRight) state = isPicked ? "is-correct" : "is-answer";
+          else if (isPicked) state = "is-wrong";
+          else state = "is-dim";
         }
 
-        if (
-          (answerState === "correct" || answerState === "wrong") &&
-          isAnswered
-        ) {
-          cssClass = answerState;
-          isClicked = true;
-        }
-
-        if (answerState === "correct") {
-          isCorrect = true;
-        }
-
-        if (answerState === "wrong") {
-          isCorrect = false;
-        }
-
-        if (answerState === "correct" && isAnswered && isClicked) {
-          // sound correct play
-          correctSound.play();
-          // bubbles pop
-          const count = 200,
-            defaults = {
-              origin: { y: 0.7 },
-            };
-
-          // eslint-disable-next-line no-inner-declarations
-          function fire(particleRatio, opts) {
-            // eslint-disable-next-line no-undef
-            confetti(
-              Object.assign({}, defaults, opts, {
-                particleCount: Math.floor(count * particleRatio),
-              })
-            );
-          }
-
-          fire(0.25, {
-            spread: 26,
-            startVelocity: 55,
-          });
-
-          fire(0.2, {
-            spread: 60,
-          });
-
-          fire(0.35, {
-            spread: 100,
-            decay: 0.91,
-            scalar: 0.8,
-          });
-
-          fire(0.1, {
-            spread: 120,
-            startVelocity: 25,
-            decay: 0.92,
-            scalar: 1.2,
-          });
-
-          fire(0.1, {
-            spread: 120,
-            startVelocity: 45,
-          });
-        }
-
-        // wrongSound play
-
-        if (answerState === "wrong" && isAnswered && isClicked) {
-          console.log("sound play");
-          wrongSound.play();
-        }
-
-        const colorsItem = COLORS.length ? COLORS[index % COLORS.length] : undefined;
         return (
-          <li className="answer" key={answer}>
+          <li key={answer}>
             <button
+              type="button"
+              className={`answer ${state}`}
               onClick={() => onSelect(answer)}
-              className={`${cssClass} animate__animated animate__zoomIn`}
-              style={{ backgroundColor: colorsItem }}
-              disabled={answerState !== ""}
-            >
-              {isAnswered &&
-                isClicked &&
-                (isCorrect ? (
-                  <img
-                    src={correctPic}
-                    alt="correct"
-                    className="correctPic show"
-                  />
-                ) : (
-                  <img src={wrongPic} alt="wrong" className="wrongPic show" />
-                ))}
-              {answer}
+              disabled={answered}
+              aria-pressed={isPicked}>
+              <span className="answer__letter" aria-hidden="true">
+                {LETTERS[index]}
+              </span>
+              <span className="answer__text">{answer}</span>
+              {answered && (isRight || isPicked) && (
+                <span className="answer__mark" aria-hidden="true">
+                  {isRight ? "✓" : "✕"}
+                </span>
+              )}
             </button>
           </li>
         );

@@ -1,21 +1,15 @@
-import {Link} from "react-router-dom"
+import { Link } from "react-router-dom";
 
-
-const PageNotFound = () =>{
-    return (
-      <>
-        <div className="pagenotfound">
-          <div className="page_not_found">
-            <h2>Oops!</h2>
-            <h3>404 - Page Not Found</h3>
-            <p>Sorry,the page you are looking for cannot be found!!</p>
-            <Link to="/" className="waves-effect waves-light btn">
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </>
-    );
-}
+const PageNotFound = () => {
+  return (
+    <div className="notice-card">
+      <h1 className="notice-card__title">This page doesn&apos;t exist</h1>
+      <p className="notice-card__text">Head back to the start to play the Ziidi Shari&apos;ah quiz.</p>
+      <Link to="/" className="btn btn--primary">
+        Back to start
+      </Link>
+    </div>
+  );
+};
 
 export default PageNotFound;

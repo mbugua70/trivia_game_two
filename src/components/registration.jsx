@@ -1,96 +1,142 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-refresh/only-export-components */
-import { Form, redirect, useNavigation, useLoaderData } from "react-router-dom";
-import Styles from "./form.module.css";
+/* eslint-disable react/prop-types */
+import { useState } from "react";
+import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router-dom";
 import { registerPlayer } from "./api";
+import logo from "../assets/brand/ziidi-shariah-logo.png";
+import tagline from "../assets/brand/ziidi-tagline.png";
+import safaricomMpesa from "../assets/brand/safaricom-mpesa.png";
 
-// using loader to pass the message down
-
-import Swal from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
-
+// ?message= is set when someone opens /trivia without registering first.
 export const loginLoader = ({ request }) => {
   return new URL(request.url).searchParams.get("message");
 };
 
-// choosing the action function does not matter.
-// the action function will intercept the request made when submitting the form
-
 export const loginAction = async ({ request }) => {
   const formData = await request.formData();
-  const name = formData.get("name");
-  const phone = formData.get("phone");
+  const name = String(formData.get("name") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
 
-  const pathname =
-    new URL(request.url).searchParams.get("redirectTo") || "/trivia";
+  // Same wording as the backend, checked here first to save a round trip.
+  if (!name) return { error: "Please insert name", field: "name" };
+  if (!phone) return { error: "Please insert phone number", field: "phone" };
+
+  const pathname = new URL(request.url).searchParams.get("redirectTo") || "/trivia";
   try {
     // { player: { id, name }, token }
     const data = await registerPlayer({ name, phone });
     localStorage.setItem("user", JSON.stringify(data));
     return redirect(pathname);
   } catch (err) {
-    // The backend sends one readable message, e.g. "Please insert name",
-    // "Please insert correct phone number" or "You have already played".
-    const MySwal = withReactContent(Swal);
-    MySwal.fire({
-      html: <i>{err.message}</i>,
-      icon: "error",
-    });
-    return err.message;
+    if (err.status === 0) {
+      return { error: "Can't reach the game right now. Check the connection and try again." };
+    }
+    // e.g. "Please insert correct phone number" or "You have already played".
+    return {
+      error: err.message,
+      field: /phone/i.test(err.message) ? "phone" : /name/i.test(err.message) ? "name" : null,
+    };
   }
 };
 
+const Welcome = ({ onStart }) => (
+  <div className="welcome">
+    <div className="welcome__brand">
+      <img className="welcome__logo" src={logo} alt="Ziidi Shari'ah" />
+      <img
+        className="welcome__tagline"
+        src={tagline}
+        alt="Money market fund, powered by M-PESA"
+      />
+    </div>
+
+    <div className="welcome__intro">
+      <h1 className="welcome__title">How well do you know Ziidi Shari&apos;ah?</h1>
+      <p className="welcome__text">
+        Answer 10 quick questions about Shari&apos;ah-compliant investing on M-PESA. Each phone
+        number gets one try.
+      </p>
+      <button type="button" className="btn btn--light btn--large" onClick={onStart}>
+        Start the quiz
+      </button>
+    </div>
+
+    <img className="welcome__footer" src={safaricomMpesa} alt="Safaricom M-PESA" />
+  </div>
+);
+
 const LoginPage = () => {
-  // code for logging status with useNavigation hook
-
   const navigation = useNavigation();
-  const loginMssgError = useLoaderData();
-  // const errorMessage = useActionData();
+  const loaderMessage = useLoaderData();
+  const actionData = useActionData();
+  // Straight to the form when redirected here with a message.
+  const [started, setStarted] = useState(Boolean(loaderMessage));
 
+  const isSubmitting = navigation.state !== "idle";
+  const error = actionData?.error || loaderMessage;
+
+  if (!started) {
+    return <Welcome onStart={() => setStarted(true)} />;
+  }
 
   return (
-    <>
-      <div className={Styles.login_container}>
-        {/* below instead of using the form we wil use Form from the react router */}
-        <Form className={Styles.form} method="post" replace>
-          <div className="row">
-            <div className="errorlgnmsg">
-              {loginMssgError && (
-                <div className="alert alert-danger" role="alert">
-                  <p>
-                    <i className="material-icons">error</i>
-                  </p>
-                  <p className="error_alert_message">{loginMssgError}</p>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="row input-field">
-            {/* <label htmlFor="name">Name</label> */}
-            <input type="text" name="name" id="name" placeholder="Name" />
-          </div>
-          <div className="row input-field">
-            {/* <label htmlFor="phone_number">Phone</label> */}
+    <div className="register">
+      <div className="register__card">
+        <img className="register__logo" src={logo} alt="Ziidi Shari'ah" />
+        <h1 className="register__title">Enter your details</h1>
+        <p className="register__text">
+          We use your phone number to make sure everyone plays once.
+        </p>
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <Form method="post" replace className="register__form" noValidate>
+          <label className="field">
+            <span className="field__label">Full name</span>
             <input
+              className={`field__input ${actionData?.field === "name" ? "is-invalid" : ""}`}
+              type="text"
+              name="name"
+              autoComplete="name"
+              placeholder="e.g. Amina Hassan"
+              aria-invalid={actionData?.field === "name"}
+              autoFocus
+            />
+          </label>
+
+          <label className="field">
+            <span className="field__label">Phone number</span>
+            <input
+              className={`field__input ${actionData?.field === "phone" ? "is-invalid" : ""}`}
               type="tel"
               name="phone"
-              id="phone"
-              placeholder="Phone Number"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="07XX XXX XXX"
+              aria-invalid={actionData?.field === "phone"}
             />
-          </div>
-          <div className="row input-field  button-style">
-            <button
-              className={Styles.button}
-              disabled={navigation.state === "submitting"}
-            >
-              {navigation.state === "submitting" ? "registering..." : "submit"}
-            </button>
-          </div>
+          </label>
 
-          {/* </form> */}
+          <button type="submit" className="btn btn--primary btn--large btn--block" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="spinner" aria-hidden="true" /> Starting your quiz
+              </>
+            ) : (
+              "Start quiz"
+            )}
+          </button>
         </Form>
+
+        <button type="button" className="btn btn--text" onClick={() => setStarted(false)}>
+          Back
+        </button>
       </div>
-    </>
+    </div>
   );
 };
 

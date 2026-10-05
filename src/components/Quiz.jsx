@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/prop-types */
 import { useState, useCallback, useEffect, useMemo, Suspense } from "react";
-import "animate.css";
 import Question from "./question";
 import { redirect, Link } from "react-router-dom";
 import Summary from "./Summary";
@@ -46,7 +45,6 @@ const loadSavedAnswers = (sessionId, questionCount) => {
 
 const QuizGame = ({ game }) => {
   const QUESTIONS = useMemo(() => toQuizQuestions(game.questions), [game.questions]);
-  const COLORS = game.config.answerColors;
   const sessionId = game.session.id;
 
   // Saved after every answer so a refresh continues at the same question
@@ -92,26 +90,17 @@ const QuizGame = ({ game }) => {
   }
 
   return (
-    <>
-      <div className="header_question">
-        <Scoreboard
-          QUESTIONS={QUESTIONS}
-          userAnswers={activeQuestion}
-          generalTimer={allTimer}
-        />
-      </div>
-      {/* question component */}
+    <div className="play">
+      <Scoreboard QUESTIONS={QUESTIONS} userAnswers={activeQuestion} generalTimer={allTimer} />
       <Question
-        userAnswers={activeQuestion}
         key={activeQuestionIndex}
         index={activeQuestionIndex}
         QUESTIONS={QUESTIONS}
-        COLORS={COLORS}
         onSelect={handleSelectedAnswer}
         onSkipAnswer={handleSkipAnswer}
         timeLimitMs={game.config.questionTimeLimitMs}
       />
-    </>
+    </div>
   );
 };
 
@@ -123,25 +112,31 @@ const GameError = () => {
   if (mustRegisterAgain) {
     clearStoredUser();
   }
+  let title = "The game couldn't start";
+  let message = "Check the connection and try again.";
+  if (error?.status === 409) {
+    title = "You've already played";
+    message = "Each phone number gets one game. Thanks for taking part!";
+  } else if (error?.status === 401) {
+    title = "Your session has expired";
+    message = "Enter your details again to continue your game.";
+  } else if (error?.status === 503) {
+    message = error.message;
+  }
+
   return (
-    <div className="pagenotfound">
-      <div className="page_not_found">
-        <h2>Oops!</h2>
-        <p>
-          {error?.status === 401
-            ? "Your session has expired. Please register again."
-            : error?.message || "Something went wrong"}
-        </p>
-        {mustRegisterAgain ? (
-          <Link to="/" className="waves-effect waves-light btn">
-            Back to Home
-          </Link>
-        ) : (
-          <button className="waves-effect waves-light btn" onClick={() => window.location.reload()}>
-            Try again
-          </button>
-        )}
-      </div>
+    <div className="notice-card" role="alert">
+      <h1 className="notice-card__title">{title}</h1>
+      <p className="notice-card__text">{message}</p>
+      {mustRegisterAgain ? (
+        <Link to="/" className="btn btn--primary">
+          Back to start
+        </Link>
+      ) : (
+        <button type="button" className="btn btn--primary" onClick={() => window.location.reload()}>
+          Try again
+        </button>
+      )}
     </div>
   );
 };
@@ -150,15 +145,11 @@ const Quiz = () => {
   const loaderData = useLoaderData();
 
   return (
-    <>
-      <div id="quiz" className="">
-        <Suspense fallback={<Preloader />}>
-          <Await resolve={loaderData.game} errorElement={<GameError />}>
-            {(game) => <QuizGame game={game} />}
-          </Await>
-        </Suspense>
-      </div>
-    </>
+    <Suspense fallback={<Preloader />}>
+      <Await resolve={loaderData.game} errorElement={<GameError />}>
+        {(game) => <QuizGame game={game} />}
+      </Await>
+    </Suspense>
   );
 };
 

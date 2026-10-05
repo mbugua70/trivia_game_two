@@ -1,57 +1,66 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
+import { STAR, StarShape } from "./Star";
 
-const QuestionTimer = ({
-  timeout,
-  onTimeOut,
-  mode,
-  userAnswers,
-  QUESTIONS,
-}) => {
+const LOW_TIME_MS = 4000;
+
+// Per-question countdown, drawn as a gilt 8-point star whose outline drains
+// as time runs out. Keyed by the parent, so it restarts for each question.
+// mode: "" while answering, then "correct" | "wrong" | "timeout".
+const QuestionTimer = ({ timeout, onTimeOut, mode }) => {
   const [remainingTime, setRemainingTime] = useState(timeout);
+  const running = mode === "" && Boolean(onTimeOut);
 
-  const answeredCorrectly = userAnswers.filter(
-    (answer, index) => answer === QUESTIONS[index].correctAnswer
-  );
-
-  const answeredPercent = Math.round(
-    (answeredCorrectly.length / userAnswers.length) * 100
-  );
-  console.log(answeredPercent);
   useEffect(() => {
-    console.log("TIMEOUT");
+    if (!running) return;
     const timer = setTimeout(onTimeOut, timeout);
-    console.log("Timeout 2");
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [timeout, onTimeOut]);
+    return () => clearTimeout(timer);
+  }, [timeout, onTimeOut, running]);
 
-  // progress configuration
   useEffect(() => {
-    console.log("INTERVAL");
-    if (timeout <= 0) return;
+    if (!running) return;
+    const startedAt = Date.now();
     const interval = setInterval(() => {
-      setRemainingTime((prevTime) => prevTime - 100);
+      setRemainingTime(Math.max(0, timeout - (Date.now() - startedAt)));
     }, 100);
+    return () => clearInterval(interval);
+  }, [timeout, running]);
 
-    return () => {
-      console.log("Working");
-      clearInterval(interval);
-    };
-  }, [timeout]);
+  const fraction = remainingTime / timeout;
+  const seconds = Math.ceil(remainingTime / 1000);
+  const isLow = running && remainingTime <= LOW_TIME_MS;
 
-  // let countDown = remainingTime / 1000;
+  let label = `${seconds} seconds left`;
+  let content = seconds;
+  if (mode === "correct") {
+    label = "Correct";
+    content = "✓";
+  } else if (mode === "wrong") {
+    label = "Wrong";
+    content = "✕";
+  } else if (mode === "timeout") {
+    label = "Time's up";
+    content = "0";
+  }
 
   return (
-    <>
-      <progress
-        value={remainingTime}
-        id="question-time"
-        max={timeout}
-        className={mode}
-      />
-    </>
+    <div
+      className={`star-timer ${mode ? `star-timer--${mode}` : ""} ${isLow ? "star-timer--low" : ""}`}
+      role="timer"
+      aria-label={label}>
+      <StarShape className="star-timer__svg" aria-hidden="true">
+        <polygon points={STAR} className="star-timer__track" />
+        <polygon
+          points={STAR}
+          pathLength="100"
+          className="star-timer__fill"
+          style={{ strokeDashoffset: mode === "" ? 100 - fraction * 100 : 0 }}
+        />
+      </StarShape>
+      <span className="star-timer__value" aria-hidden="true">
+        {content}
+      </span>
+    </div>
   );
 };
 

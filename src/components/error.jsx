@@ -1,33 +1,20 @@
-import { useRouteError } from "react-router-dom";
-import ErrorIcon from "@mui/icons-material/Error";
+import { Link, useRouteError } from "react-router-dom";
 
 const ErrorHandling = () => {
   const error = useRouteError();
-  console.log(error);
+  console.error(error);
   return (
-    <>
-      <div className="errorHandling">
-        <div className="row">
-          <div className="col s12 m12">
-            <div className="card blue-grey darken-1">
-              <div className="card-content white-text">
-                <h2>
-                  <ErrorIcon className="icons_error" />
-                </h2>
-                <span className="card-title">
-                  <h1 className="error_message">{error.message}</h1>
-                </span>
-                <p>
-                  <pre className="error_status">
-                    {error.status} - {error.statusText}
-                  </pre>
-                </p>
-              </div>
-            </div>
-          </div>
+    <div className="stage stage--play">
+      <div className="stage__content">
+        <div className="notice-card" role="alert">
+          <h1 className="notice-card__title">Something went wrong</h1>
+          <p className="notice-card__text">Reload the page or go back to the start.</p>
+          <Link to="/" className="btn btn--primary" reloadDocument>
+            Back to start
+          </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,95 +1,91 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Howl } from "howler";
 import QuestionTimer from "./Quiztimer";
 import Answers from "./answers";
+import correctSoundFile from "../assets/audio/correct.wav";
+import wrongSoundFile from "../assets/audio/wrong.wav";
 
+// How long the result stays on screen before the next question.
+const REVEAL_MS = 2200;
 
-const Question = ({
-  onSelect,
-  onSkipAnswer,
-  index,
-  QUESTIONS,
-  COLORS,
-  userAnswers,
-  timeLimitMs,
-}) => {
-  const [answer, setAnswer] = useState({
-    selectedAnswer: "",
-    isCorrect: null,
+const correctSound = new Howl({ src: [correctSoundFile] });
+const wrongSound = new Howl({ src: [wrongSoundFile] });
+
+const celebrate = () => {
+  if (typeof window.confetti !== "function") return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  window.confetti({
+    particleCount: 90,
+    spread: 70,
+    origin: { y: 0.65 },
+    colors: ["#ffffff", "#D9B45A", "#45B04B", "#1A4A2E"],
   });
+};
 
-  let timer = timeLimitMs;
+const Question = ({ onSelect, onSkipAnswer, index, QUESTIONS, timeLimitMs }) => {
+  const question = QUESTIONS[index];
+  // "" while answering, then "correct" | "wrong" | "timeout".
+  const [phase, setPhase] = useState("");
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const finishTimer = useRef(null);
 
-  if (answer.selectedAnswer) {
-    timer = 1000;
-  }
-
-  if (answer.isCorrect !== null) {
-    timer = 2000;
-  }
+  useEffect(() => () => clearTimeout(finishTimer.current), []);
 
   const handleSelectedAnswer = (answer) => {
-    setAnswer({
-      selectedAnswer: answer,
-      isCorrect: null,
-    });
-
-    setTimeout(() => {
-      setAnswer({
-        selectedAnswer: answer,
-        isCorrect: QUESTIONS[index].correctAnswer === answer,
-      });
-
-      setTimeout(() => {
-        onSelect(answer);
-      }, 2000);
-    }, 0);
+    if (phase !== "") return;
+    const isCorrect = answer === question.correctAnswer;
+    setSelectedAnswer(answer);
+    setPhase(isCorrect ? "correct" : "wrong");
+    if (isCorrect) {
+      correctSound.play();
+      celebrate();
+    } else {
+      wrongSound.play();
+    }
+    finishTimer.current = setTimeout(() => onSelect(answer), REVEAL_MS);
   };
 
-  let answerState = "";
+  const handleTimeout = () => {
+    setPhase("timeout");
+    wrongSound.play();
+    finishTimer.current = setTimeout(onSkipAnswer, REVEAL_MS);
+  };
 
-  if (answer.selectedAnswer && answer.isCorrect !== null) {
-    answerState = answer.isCorrect ? "correct" : "wrong";
-  } else if (answer.selectedAnswer) {
-    answerState = "answered";
-  }
+  let feedback = "";
+  if (phase === "correct") feedback = "Correct!";
+  if (phase === "wrong") feedback = `Not quite. The answer is "${question.correctAnswer}".`;
+  if (phase === "timeout") feedback = `Time's up. The answer is "${question.correctAnswer}".`;
 
   return (
-    <>
-      <div className="semi_header">
+    <section className="question-card" aria-labelledby="question-text">
+      <div className="question-card__top">
         <QuestionTimer
-          QUESTIONS={QUESTIONS}
-          userAnswers={userAnswers}
-          key={timer}
-          timeout={timer}
-          onTimeOut={answer.selectedAnswer === "" ? onSkipAnswer : null}
-          mode={answerState}
+          timeout={timeLimitMs}
+          onTimeOut={phase === "" ? handleTimeout : null}
+          mode={phase}
         />
+        <p className="question-card__count">
+          Question {index + 1} of {QUESTIONS.length}
+        </p>
       </div>
-      <div id="question">
-        {/* NOTES::
-             KEY USE CASES OTHER THAN IN MAPPING
-             -- keys can be used to reset the compfonent by react.(unmount and remount)
-             */}
-        <div className="question_main animate__animated animate__bounceInRight">
-          <p className="question_number">
-            {`Question ${userAnswers.length + 1}`}
-            {` out of  ${QUESTIONS.length}`}
-          </p>
-          <h2 className="">{QUESTIONS[index].text}</h2>
-        </div>
 
-        <div className="quiz_answers animate__animated animate__bounceInRight">
-          <Answers
-            COLORS={COLORS}
-            selectedAnswer={answer.selectedAnswer}
-            answer={QUESTIONS[index].answers}
-            onSelect={handleSelectedAnswer}
-            answerState={answerState}
-          />
-        </div>
-      </div>
-    </>
+      <h1 id="question-text" className="question-card__text">
+        {question.text}
+      </h1>
+
+      <Answers
+        answers={question.answers}
+        correctAnswer={question.correctAnswer}
+        selectedAnswer={selectedAnswer}
+        phase={phase}
+        onSelect={handleSelectedAnswer}
+      />
+
+      <p className={`question-card__feedback question-card__feedback--${phase || "idle"}`} aria-live="polite">
+        {feedback}
+      </p>
+    </section>
   );
 };
 

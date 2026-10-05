@@ -19,7 +19,7 @@ This is a React 18 + Vite single-page frontend for a timed trivia quiz. It is pl
 
 `main.jsx` → `App.jsx` → `parentrouter.jsx` (`RouterProvider`) → `childparentrouter.jsx` defines the routes:
 
-- `/` (index) uses `registration.jsx`. Its `loginLoader` reads `?message=` and its `loginAction` calls `POST /players` with name and phone, stores `{ player, token }` in `localStorage["user"]` and redirects to `?redirectTo` or `/trivia`. Backend errors arrive as one readable `message` (e.g. "You have already played") and are shown with SweetAlert2.
+- `/` (index) uses `registration.jsx`. Its `loginLoader` reads `?message=` and its `loginAction` calls `POST /players` with name and phone, stores `{ player, token }` in `localStorage["user"]` and redirects to `?redirectTo` or `/trivia`. It opens on a welcome screen; "Start the quiz" reveals the form. Errors (empty fields are checked client-side first, then the backend's `message`, e.g. "You have already played") show inline in the form via `useActionData`, not in a pop-up.
 - `/trivia` uses `Quiz.jsx`. Its `quizLoader` checks `requireAuth()` (`utilis.js`) and returns `defer({ game: startSession() })`. `POST /sessions` starts the player's one game or resumes it, returning the questions, the game config (timers, `answerColors`) and timing info in one response. Errors (already played, expired token, no questions) render `GameError` via `<Await errorElement>`.
 - `Layout` wraps all routes, and `error.jsx` is the route `errorElement`.
 
@@ -27,12 +27,17 @@ This is a React 18 + Vite single-page frontend for a timed trivia quiz. It is pl
 
 - **No request per answer, by design** (unreliable event wifi). Each question from the API includes `correctOptionId`, so right/wrong is revealed locally. `toQuizQuestions` in `Quiz.jsx` reshapes questions for the components: `answers` (option texts), `correctAnswer` (text of the correct option) and `optionIdByText`. Everything compares the chosen text with `QUESTIONS[i].correctAnswer`.
 - `QuizGame` holds the answers given so far (`activeQuestion`; `null` = skipped). The current question index is that array's length. The array is also saved to `localStorage["trivia_answers_<sessionId>"]`, so a refresh resumes at the same question instead of replaying seen ones.
-- `answers.jsx` shuffles options once per question (kept in a `useRef`) and colours button `i` with `answerColors[i % length]`.
-- `Question` is keyed by question index, so its state resets for each question. `QuestionTimer` is keyed by its `timeout`, so it remounts whenever the phase changes: `questionTimeLimitMs` (default 13s) to answer, then 1s for "answered", then 2s for "correct"/"wrong". When time runs out, the answer is recorded as skipped (`null`).
+- `answers.jsx` shuffles options once per question (kept in a `useRef`) and labels them A–D by position. After answering, the right option is always highlighted, so a wrong answer or timeout still shows it. The config's `answerColors` is no longer used by the UI.
+- `Question` is keyed by question index, so its state resets for each question. Its `phase` is `""` while answering, then `"correct"`, `"wrong"` or `"timeout"`; the result shows for `REVEAL_MS` (2.2s) before moving on, and a timeout is recorded as skipped (`null`). Sounds and confetti fire once from the answer handler, not from render.
+- `Quiztimer.jsx` draws the countdown as the 8-point star (`Star.jsx`), counting `questionTimeLimitMs` (default 13s); the same star frames the score in `Summary`.
 - `Scoreboard`'s overall countdown starts from the server's `startedAt`/`serverTime`, so a refresh doesn't reset it. It's display-only.
 - `Summary` submits `POST /sessions/:id/submit` with the option id picked per question, **never a score**. The server scores it and the summary shows the server's numbers. A retry button covers network failures (submit is idempotent). After success it clears the stored user and saved answers and returns to `/` for the next player.
-- Correct and wrong answers play sounds through `howler` and fire confetti. `confetti` is a **global** loaded from a CDN `<script>` in `index.html`, not an npm import.
+- `confetti` is a **global** loaded from a CDN `<script>` in `index.html`, not an npm import.
 
 ### Styling
 
-The styling mixes several systems: Materialize CSS and material-icons (imported in `App.jsx`), Bootstrap 4 from a CDN in `index.html`, global styles in `src/index.css` and `src/App.css`, a CSS module (`form.module.css`) for the login form, and `animate.css` classes. MUI, emotion and styled-components are installed, but only `error.jsx` imports any of them.
+One hand-written stylesheet, `src/index.css`, light theme only (the client rejected a dark look). Tokens live in `:root`: the Ziidi Shari'ah brand greens (`--field`, `--forest`), white surfaces, a sparing gilt accent, and one typeface, Archivo (Google Fonts in `index.html`), set wide (`font-stretch: 125%`) for display text. Materialize, Bootstrap and animate.css are no longer loaded; their npm packages and SweetAlert2 are still in `package.json` but unused.
+
+Brand assets in `src/assets/brand/` were cut from the client's slide: `ziidi-bg.jpg` is the background with the logo and footer painted out, and the logo, tagline and Safaricom | M-PESA mark are separate images, so the layout can place them at any size. `Layout` puts the background behind every screen and fades it slightly during play.
+
+Layouts, by media query at the end of `index.css`: phone (≤640px), desktop, large landscape (≥1600px), and **portrait kiosk** (`orientation: portrait` and ≥900px wide; the 1080×1920 event screen). The kiosk layout scales everything up, fills the full height, and puts the answers in the lower half. Hover styles are only applied under `(hover: hover)`, so touchscreens don't show a stuck highlight.
