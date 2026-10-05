@@ -252,20 +252,180 @@ p {
   width: min(260px, 60vw);
 }
 
-/* One entrance moment: the brand settles in, then the invitation. */
-.welcome__brand,
-.welcome__intro {
-  animation: rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+/* ---------- Welcome motion ----------
+   One orchestrated opening, then a quiet idle state:
+   1. the star lattice constructs itself from the centre outward (Lattice.jsx)
+   2. the logo is unveiled left to right, then the tagline
+   3. the headline, text and button arrive
+   Idle: single tiles catch a gilt glint, and a band of light crosses the
+   button every few seconds. On Start, everything un-draws and leaves. */
+
+.welcome {
+  position: relative;
+  isolation: isolate;
 }
 
-.welcome__intro {
-  animation-delay: 180ms;
+.welcome > :not(.lattice) {
+  position: relative;
+  z-index: 1;
+}
+
+.lattice {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Quiet behind the logo and text, fuller toward the edges. */
+  -webkit-mask-image: radial-gradient(ellipse 60% 46% at 50% 45%, transparent 30%, #000 85%);
+  mask-image: radial-gradient(ellipse 60% 46% at 50% 45%, transparent 30%, #000 85%);
+}
+
+.lattice polygon {
+  fill: transparent;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: fill 700ms ease, stroke 700ms ease;
+}
+
+.lattice__outer {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+  animation: draw 1100ms cubic-bezier(0.55, 0, 0.25, 1) var(--draw-delay) forwards;
+}
+
+.lattice__inner {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.6;
+  animation: draw 900ms cubic-bezier(0.55, 0, 0.25, 1) calc(var(--draw-delay) + 380ms) forwards;
+}
+
+.lattice__tile.is-glint .lattice__outer {
+  fill: rgba(217, 180, 90, 0.42);
+  stroke: rgba(246, 222, 150, 1);
+  transition-duration: 450ms;
+}
+
+.lattice__tile.is-glint .lattice__inner {
+  fill: rgba(255, 246, 220, 0.55);
+  stroke: rgba(255, 255, 255, 0.95);
+  transition-duration: 450ms;
+}
+
+.lattice.is-leaving .lattice__outer,
+.lattice.is-leaving .lattice__inner {
+  stroke-dashoffset: 0;
+  animation: undraw 420ms cubic-bezier(0.6, 0, 0.8, 0.4) var(--leave-delay) forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes undraw {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+}
+
+.welcome__logo {
+  animation: unveil 900ms cubic-bezier(0.7, 0, 0.2, 1) 450ms both;
+}
+
+.welcome__tagline {
+  animation: fade 700ms ease 1150ms both;
+}
+
+.welcome__title {
+  animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 1350ms both;
+}
+
+.welcome__text {
+  animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 1500ms both;
+}
+
+.welcome__intro .btn {
+  animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1.3) 1700ms both;
+}
+
+.welcome__footer {
+  animation: fade 900ms ease 2000ms both;
+}
+
+.welcome.is-leaving .welcome__brand,
+.welcome.is-leaving .welcome__intro,
+.welcome.is-leaving .welcome__footer {
+  animation: leave 420ms cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+
+.welcome.is-leaving .welcome__intro {
+  animation-delay: 60ms;
+}
+
+@keyframes unveil {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(18px);
+  }
+}
+
+@keyframes leave {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* A band of light crossing the Start button every few seconds. */
+.btn--shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn--shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(217, 180, 90, 0.45) 46%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(217, 180, 90, 0.45) 54%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: shine 5s ease-in-out 3.2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  22%,
+  100% {
+    transform: translateX(120%);
   }
 }
 
@@ -279,6 +439,7 @@ p {
 }
 
 .register__card {
+  animation: rise 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   width: min(460px, 100%);
   padding: 32px clamp(20px, 5vw, 36px) 20px;
   background: var(--white);
@@ -1409,6 +1570,7 @@ p {
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
