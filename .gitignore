@@ -1,1 +1,11 @@
 node_modules
+
+# Local env overrides - never commit. VITE_* values end up in the public
+# JS bundle anyway, so never put a secret in any frontend env file.
+.env.local
+.env.*.local
+.env.production
+
+# OS / logs
+.DS_Store
+*.log
