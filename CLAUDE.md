@@ -13,7 +13,7 @@ There is no test framework.
 
 ## Architecture
 
-This is a React 18 + Vite single-page frontend for a timed trivia quiz. It is plain JSX, not TypeScript. Its backend is the `safaricom_trivia` game in the sibling `backend_games` repo (see that repo's CLAUDE.md). The base URL comes from `VITE_API_URL` (`.env.development` locally, a Vercel environment variable in production), e.g. `http://localhost:5000/api/safaricom_trivia/v1`. The `"proxy"` field in `package.json` is a leftover and Vite ignores it. `vercel.json` rewrites every path to `index.html` so client-side routing works on Vercel.
+This is a React 18 + Vite single-page frontend for a timed trivia quiz. It is plain JSX, not TypeScript. Its backend is the `safaricom_trivia` game in the sibling `backend_games` repo (see that repo's CLAUDE.md). The base URL comes from `API_URL` (`.env.development` locally, a Vercel environment variable in production; injected by a `define` in `vite.config.js`, since Vite only exposes `VITE_`-prefixed variables by default), e.g. `http://localhost:5000/api/safaricom_trivia/v1`. The `"proxy"` field in `package.json` is a leftover and Vite ignores it. `vercel.json` rewrites every path to `index.html` so client-side routing works on Vercel.
 
 ### Routing and data flow (React Router v6 data APIs)
 

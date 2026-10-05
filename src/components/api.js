@@ -1,7 +1,8 @@
 // Base URL of the safaricom_trivia game in backend_games, e.g.
-// http://localhost:5000/api/safaricom_trivia/v1 - set in .env.development
-// locally and as an environment variable on Vercel.
-const API_URL = import.meta.env.VITE_API_URL;
+// http://localhost:5000/api/safaricom_trivia/v1 - API_URL in .env.development
+// locally and in the Vercel project's environment variables. Injected at
+// build time by vite.config.js.
+const API_URL = import.meta.env.API_URL;
 
 // The backend always answers { success, message, data }.
 async function request(path, { method = "GET", body, token } = {}) {
