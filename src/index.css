@@ -894,15 +894,7 @@ p {
   font-weight: 800;
   font-size: 14px;
   color: var(--white);
-  background: #b9c8bc;
-}
-
-.review__item--right .review__mark {
-  background: var(--right);
-}
-
-.review__item--wrong .review__mark {
-  background: var(--wrong);
+  background: var(--forest);
 }
 
 .review__question {
@@ -913,13 +905,8 @@ p {
 .review__answer {
   margin-top: 4px;
   font-size: 15px;
-  color: #1d6b33;
-  font-weight: 600;
-}
-
-.review__answer--given {
   color: var(--ink-soft);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ---------- Notices, loading ---------- */

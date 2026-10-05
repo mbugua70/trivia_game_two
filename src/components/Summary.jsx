@@ -134,28 +134,22 @@ const Summary = ({ userAnswers, QUESTIONS, sessionId, onFinished }) => {
         <h2 id="review-title" className="review__title">
           Your answers
         </h2>
+        {/* Only what the player picked - never which answers were right.
+            This screen stays up at a public kiosk, so the next player in
+            line can see it. */}
         <ol className="review__list">
           {QUESTIONS.map((question, index) => {
             const answer = userAnswers[index] ?? null;
-            const state =
-              answer === null ? "skipped" : answer === question.correctAnswer ? "right" : "wrong";
             return (
-              <li key={question.id} className={`review__item review__item--${state}`}>
+              <li key={question.id} className="review__item">
                 <span className="review__mark" aria-hidden="true">
-                  {state === "right" ? "✓" : state === "wrong" ? "✕" : "–"}
+                  {index + 1}
                 </span>
                 <div>
                   <p className="review__question">{question.text}</p>
-                  {state === "right" ? (
-                    <p className="review__answer">{answer}</p>
-                  ) : (
-                    <>
-                      <p className="review__answer review__answer--given">
-                        {answer === null ? "No answer" : `You said: ${answer}`}
-                      </p>
-                      <p className="review__answer">Answer: {question.correctAnswer}</p>
-                    </>
-                  )}
+                  <p className="review__answer">
+                    {answer === null ? "No answer" : `Your answer: ${answer}`}
+                  </p>
                 </div>
               </li>
             );

@@ -31,7 +31,7 @@ This is a React 18 + Vite single-page frontend for a timed trivia quiz. It is pl
 - `Question` is keyed by question index, so its state resets for each question. Its `phase` is `""` while answering, then `"correct"`, `"wrong"` or `"timeout"`; the result shows for `REVEAL_MS` (2.2s) before moving on, and a timeout is recorded as skipped (`null`). Sounds and confetti fire once from the answer handler, not from render.
 - `Quiztimer.jsx` draws the countdown as the 8-point star (`Star.jsx`), counting `questionTimeLimitMs` (default 13s); the same star frames the score in `Summary`.
 - `Scoreboard`'s overall countdown starts from the server's `startedAt`/`serverTime`, so a refresh doesn't reset it. It's display-only.
-- `Summary` submits `POST /sessions/:id/submit` with the option id picked per question, **never a score**. The server scores it and the summary shows the server's numbers. A retry button covers network failures (submit is idempotent). After success it clears the stored user and saved answers and returns to `/` for the next player.
+- `Summary` (results) shows the score and, per question, only the answer the player picked: never which were right or the correct answers, because the screen stays up at a public kiosk where the next player can read it. It submits `POST /sessions/:id/submit` with the option id picked per question, **never a score**. The server scores it and the summary shows the server's numbers. A retry button covers network failures (submit is idempotent). After success it clears the stored user and saved answers and returns to `/` for the next player.
 - `confetti` is a **global** loaded from a CDN `<script>` in `index.html`, not an npm import.
 
 ### Styling
