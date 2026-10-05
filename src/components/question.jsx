@@ -11,13 +11,14 @@ const Question = ({
   QUESTIONS,
   COLORS,
   userAnswers,
+  timeLimitMs,
 }) => {
   const [answer, setAnswer] = useState({
     selectedAnswer: "",
     isCorrect: null,
   });
 
-  let timer = 13000;
+  let timer = timeLimitMs;
 
   if (answer.selectedAnswer) {
     timer = 1000;
@@ -36,7 +37,7 @@ const Question = ({
     setTimeout(() => {
       setAnswer({
         selectedAnswer: answer,
-        isCorrect: QUESTIONS[index].answers[0] === answer,
+        isCorrect: QUESTIONS[index].correctAnswer === answer,
       });
 
       setTimeout(() => {

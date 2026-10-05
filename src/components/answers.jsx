@@ -99,8 +99,7 @@ const Answers = ({ onSelect, answer, selectedAnswer, answerState, COLORS }) => {
           wrongSound.play();
         }
 
-        const colorsItems = COLORS.map((items) => items.colors_answers);
-        const colorsItem = colorsItems[0][index];
+        const colorsItem = COLORS.length ? COLORS[index % COLORS.length] : undefined;
         return (
           <li className="answer" key={answer}>
             <button

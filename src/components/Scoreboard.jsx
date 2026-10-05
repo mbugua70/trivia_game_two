@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 const Scoreboard = ({ userAnswers, QUESTIONS, generalTimer }) => {
   const [remainingTime, setRemainingTime] = useState(generalTimer);
   const answeredCorrectly = userAnswers.filter(
-    (answer, index) => answer === QUESTIONS[index].answers[0]
+    (answer, index) => answer === QUESTIONS[index].correctAnswer
   );
 
   const answeredPercent = Math.round(

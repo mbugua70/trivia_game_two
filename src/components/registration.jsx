@@ -2,7 +2,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Form, redirect, useNavigation, useLoaderData } from "react-router-dom";
 import Styles from "./form.module.css";
-import { loginUser } from "./api";
+import { registerPlayer } from "./api";
 
 // using loader to pass the message down
 
@@ -24,61 +24,18 @@ export const loginAction = async ({ request }) => {
   const pathname =
     new URL(request.url).searchParams.get("redirectTo") || "/trivia";
   try {
-    const data = await loginUser({ name, phone });
+    // { player: { id, name }, token }
+    const data = await registerPlayer({ name, phone });
     localStorage.setItem("user", JSON.stringify(data));
-
-    // const response = redirect(pathname);
-    // response.body = true;
     return redirect(pathname);
   } catch (err) {
-    // console.log(err.includes("Failed to fetch"));
-    if (err) {
-      if (err.message.phone !== "") {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          html: <i>{err.message.phone}</i>,
-          icon: "error",
-        });
-      }
-
-      if (err.message.name !== "") {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          html: <i>{err.message.name}</i>,
-          icon: "error",
-        });
-      }
-
-      if (err.message.validate === "All fields must be filled ") {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          html: <i>{err.message.validate}</i>,
-          icon: "error",
-        });
-      }
-
-      if (err.message.played !== "") {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          html: <i>{err.message.played}</i>,
-          icon: "error",
-        });
-      }
-
-      // failed to fetch
-      if (
-        !err.message.played &&
-        !err.message.validate &&
-        !err.message.name &&
-        !err.message.phone
-      ) {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          html: <i>Failed to fetch</i>,
-          icon: "error",
-        });
-      }
-    }
+    // The backend sends one readable message, e.g. "Please insert name",
+    // "Please insert correct phone number" or "You have already played".
+    const MySwal = withReactContent(Swal);
+    MySwal.fire({
+      html: <i>{err.message}</i>,
+      icon: "error",
+    });
     return err.message;
   }
 };

@@ -1,10 +1,6 @@
-export async function requireAuth() {
-  const storeOne = localStorage.getItem("user");
-  const storeTwo = JSON.parse(storeOne);
-  const isLoggedIn = storeTwo === null ? false : true;
+import { getStoredUser } from "./api";
 
-  if (!isLoggedIn) {
-    return null;
-  }
-  return isLoggedIn;
+export async function requireAuth() {
+  const user = getStoredUser();
+  return Boolean(user && user.token);
 }
